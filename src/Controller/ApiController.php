@@ -23,11 +23,26 @@ class ApiController extends AbstractFOSRestController
      */
     public function getBooks(): Response
     {
-        return $this->json(['message' => 'GET action']);
+        return $this->json(['message' => 'GET books']);
     }
 
     /**
-     * @Rest\Post("/api/secured/books/create")
+     * @Rest\Get("/api/books/{id}")
+     * 
+     * @OA\Response(
+     *     response=200,
+     *     description="Returns a simple message",
+     *     @Model(type=Response::class)
+     * )
+     * @OA\Tag(name="Resource")
+     */
+    public function getSingleBook(): Response
+    {
+        return $this->json(['message' => 'GET book']);
+    }
+
+    /**
+     * @Rest\Post("/api/secured/books")
      * 
      * @OA\Response(
      *     response=203,
@@ -38,6 +53,37 @@ class ApiController extends AbstractFOSRestController
      */
     public function createBooks(): Response
     {        
-        return $this->json(['message' => 'CREATE action']);
+        return $this->json(['message' => 'CREATE book']);
+    }
+
+
+    /**
+     * @Rest\Put("/api/secured/books/{id}")
+     * 
+     * @OA\Response(
+     *     response=203,
+     *     description="Returns a simple message",
+     *     @Model(type=Response::class)
+     * )
+     * @OA\Tag(name="Resource")
+     */
+    public function updateBooks(): Response
+    {        
+        return $this->json(['message' => 'UPDATE action']);
+    }
+
+    /**
+     * @Rest\Delete("/api/secured/books/{id}")
+     * 
+     * @OA\Response(
+     *     response=203,
+     *     description="Returns a simple message",
+     *     @Model(type=Response::class)
+     * )
+     * @OA\Tag(name="Resource")
+     */
+    public function deleteBooks(): Response
+    {        
+        return $this->json(['message' => 'UPDATE action']);
     }
 }
