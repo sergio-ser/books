@@ -3,8 +3,11 @@
 namespace App\Repository;
 
 use App\Entity\Books;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<Books>
@@ -20,29 +23,66 @@ class BooksRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Books::class);
     }
+    
+    /**
+     * getCount
+     *
+     * @param  mixed $q
+     * @return int
+     */
+    final public function getCount(string $q = null, $author = null): int
+    {
 
-//    /**
-//     * @return Books[] Returns an array of Books objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('b')
-//            ->andWhere('b.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('b.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+        $qb = $this->getEntityManager()->createQueryBuilder();
 
-//    public function findOneBySomeField($value): ?Books
-//    {
-//        return $this->createQueryBuilder('b')
-//            ->andWhere('b.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        $qb->select('count(books.id)');
+
+        $this->commonQuery($qb, $q, $author);
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+    
+    /**
+     * commonQuery
+     *
+     * @param  mixed $qb
+     * @param  mixed $q
+     * @return void
+     */
+    final public function commonQuery(QueryBuilder $qb, ?string $q, ?string $author): void
+    {
+        $qb->from('App:Books', 'books');
+
+        if ($author) {
+            $qb->andWhere('books.author = :author');
+            $qb->setParameter('author', $author);
+        }
+        if ($q) {
+            $qb->andWhere('books.title LIKE :q OR books.price LIKE :q OR books.author LIKE :q OR books.description LIKE :q');
+            $qb->setParameter('q', '%' . $q . '%');
+        }
+    }
+
+    final public function getAll(int $page, int $noRecords, string $sortField, string $sortType, string $q = null, string $author = null): array
+    {
+
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $qb->select("
+            books.id,
+            books.title,
+            books.price,
+            books.author,
+            books.description
+        ");
+
+        $this->commonQuery($qb, $q, $author);
+
+        $qb->orderBy('books.' . $sortField, $sortType);
+
+        $qb->setMaxResults($noRecords);
+        $qb->setFirstResult($page * $noRecords);
+
+        return $qb->getQuery()->getArrayResult();
+    }
 }

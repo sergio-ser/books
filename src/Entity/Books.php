@@ -78,4 +78,20 @@ class Books
 
         return $this;
     }
+
+    /**
+     * Get an array representation of the book data.
+     *
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'id'          => $this->id,
+            'title'       => $this->title,
+            'author'      => $this->author,
+            'description' => $this->description,
+            'price'       => $this->price,
+        ];
+    }
 }
