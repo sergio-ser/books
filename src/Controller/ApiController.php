@@ -2,88 +2,74 @@
 
 namespace App\Controller;
 
-use OpenApi\Annotations as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Symfony\Component\HttpFoundation\Response;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use Psr\Log\LoggerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ApiController extends AbstractFOSRestController
 {
+    protected LoggerInterface $logger;
+    protected ManagerRegistry $doctrine;
+    protected $validator;
 
-    /**
-     * @Rest\Get("/api/books")
-     * 
-     * @OA\Response(
-     *     response=200,
-     *     description="Returns a simple message",
-     *     @Model(type=Response::class)
-     * )
-     * @OA\Tag(name="Resource")
-     */
-    public function getBooks(): Response
+    public function __construct(LoggerInterface $logger, ManagerRegistry $doctrine)
     {
-        return $this->json(['message' => 'GET books']);
+        $this->logger = $logger;
+        $this->doctrine = $doctrine;
+        $this->validator = Validation::createValidator();
     }
 
-    /**
-     * @Rest\Get("/api/books/{id}")
-     * 
-     * @OA\Response(
-     *     response=200,
-     *     description="Returns a simple message",
-     *     @Model(type=Response::class)
-     * )
-     * @OA\Tag(name="Resource")
-     */
-    public function getSingleBook(): Response
+
+    protected function setListingConfigurations(Request $request, &$page, &$noRecords, &$sortField, &$sortType): void
     {
-        return $this->json(['message' => 'GET book']);
+        $page = (int)$request->get('offset') ? (int)$request->get('offset') - 1 : 0;
+
+        $noRecords = match ($request->get('limit')) {
+            -1 => PHP_INT_MAX,
+            null => 20,
+            default => (int)$request->get('limit'),
+        };
+
+        $sort = $request->get('sort');
+        $sortFields = explode('-', $sort);
+
+        $sortField = $sortFields[1] ?? ($sortFields[0] ?: 'id');
+        $sortType = isset($sortFields[1]) ? 'DESC' : ($sortFields[0] ? 'ASC' : 'DESC');
     }
 
-    /**
-     * @Rest\Post("/api/secured/books")
-     * 
-     * @OA\Response(
-     *     response=203,
-     *     description="Returns a simple message",
-     *     @Model(type=Response::class)
-     * )
-     * @OA\Tag(name="Resource")
-     */
-    public function createBooks(): Response
-    {        
-        return $this->json(['message' => 'CREATE book']);
-    }
+    protected function setHeaderLink(Request $request, $page, $noRecords, $noTotal, $params = []): string
+    {
 
+        // get current url
+        $url = $this->generateUrl($request->get('_route'), $params, UrlGeneratorInterface::ABSOLUTE_URL);
 
-    /**
-     * @Rest\Put("/api/secured/books/{id}")
-     * 
-     * @OA\Response(
-     *     response=203,
-     *     description="Returns a simple message",
-     *     @Model(type=Response::class)
-     * )
-     * @OA\Tag(name="Resource")
-     */
-    public function updateBooks(): Response
-    {        
-        return $this->json(['message' => 'UPDATE action']);
-    }
+        // get last offset
+        $lastOffset = ceil($noTotal / $noRecords);
 
-    /**
-     * @Rest\Delete("/api/secured/books/{id}")
-     * 
-     * @OA\Response(
-     *     response=203,
-     *     description="Returns a simple message",
-     *     @Model(type=Response::class)
-     * )
-     * @OA\Tag(name="Resource")
-     */
-    public function deleteBooks(): Response
-    {        
-        return $this->json(['message' => 'UPDATE action']);
+        // first, last, prev and next link
+        $firstLink = $url . '?offset=1&limit=' . $noRecords;
+        $lastLink = $url . '?offset=' . $lastOffset . '&limit=' . $noRecords;
+        $prevLink = $nextLink = null;
+
+        if ($page + 2 <= $lastOffset) {
+            $nextLink = $url . '?offset=' . ($page + 2) . '&limit=' . $noRecords;
+        }
+        if ($page >= 1) {
+            $prevLink = $url . '?offset=' . $page . '&limit=' . $noRecords;
+        }
+
+        // header link
+        $headerLink = '<' . $firstLink . '>; rel="first", <' . $lastLink . '>; rel="last"';
+        if ($prevLink) {
+            $headerLink .= ', <' . $prevLink . '>; rel="prev"';
+        }
+        if ($nextLink) {
+            $headerLink .= ', <' . $nextLink . '>; rel="next"';
+        }
+
+        return $headerLink;
     }
 }
