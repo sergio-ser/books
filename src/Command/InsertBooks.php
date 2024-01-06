@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Books;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,17 +40,20 @@ class InsertBooks extends Command
             $book->setDescription($faker->paragraph);
             $book->setPrice($faker->randomFloat(2, 1, 100));
 
-            $this->entityManager->persist($book);
+            $producerService = new Producer();
+            $producerService->publish($book);
 
-            if (($i % $batchSize) === 0) {
-                $this->entityManager->flush();
-                $this->entityManager->clear();
-                unset($book);
-                gc_collect_cycles();
-            }
+            // $this->entityManager->persist($book);
+
+            // if (($i % $batchSize) === 0) {
+            //     $this->entityManager->flush();
+            //     $this->entityManager->clear();
+            //     unset($book);
+            //     gc_collect_cycles();
+            // }
         }
 
-        $this->entityManager->flush();
+        // $this->entityManager->flush();
 
         $output->writeln('Records inserted successfully.');
 
