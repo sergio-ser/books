@@ -85,4 +85,21 @@ class BooksRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getArrayResult();
     }
+
+    public function getBooksByCursor($cursor, $limit)
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('books.id, books.title', 'books.price');
+        $qb->from('App:Books', 'books');
+        $qb->orderBy('books.id');
+
+        if ($cursor) {
+            $qb->andWhere('books.id > :cursor');
+            $qb->setParameter('cursor', $cursor);
+        }
+
+        $qb->setMaxResults($limit);
+
+        return $qb->getQuery()->getResult();
+    }
 }

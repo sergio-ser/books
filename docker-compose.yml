@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  php-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    depends_on:
+      - mysql
+      - rabbitmq
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test_books
+      MYSQL_USER: books
+      MYSQL_PASSWORD: root
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    ports:
+      - 5672:5672
+      - 15672:15672
