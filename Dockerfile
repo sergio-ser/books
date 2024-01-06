@@ -28,8 +28,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Install Symfony dependencies
 RUN composer install
 
-# Run Symfony console commands (e.g., migrations)
-RUN php bin/console doctrine:migrations:migrate --no-interaction
+# Create a script to run commands and start services
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
 # Start PHP-FPM and Nginx
-CMD service nginx start && php-fpm -R
+CMD /usr/local/bin/start.sh
