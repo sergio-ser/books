@@ -1,11 +1,14 @@
 # Use the official PHP image with FPM (FastCGI Process Manager)
 FROM php:8.1-fpm
 
+# Increase PHP memory limit
+RUN echo "memory_limit = 128M" > /usr/local/etc/php/conf.d/docker-php-memory-limit.ini
+
 # Install required PHP extensions
 RUN docker-php-ext-install pdo_mysql opcache
 
 # Install Nginx
-RUN apt-get update && apt-get install -y nginx && apt-get install -y nano
+RUN apt-get update && apt-get install -y nginx && apt-get install -y unzip && apt-get install -y nano
 
 # Copy Nginx configuration
 COPY nginx.conf /etc/nginx/sites-available/default
@@ -23,7 +26,7 @@ RUN chown -R www-data:www-data /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.2.19
 
 # Install Symfony dependencies
-RUN composer install --no-scripts --no-autoloader
+RUN composer install
 
 # Run Symfony console commands (e.g., migrations)
 RUN php bin/console doctrine:migrations:migrate --no-interaction

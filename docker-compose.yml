@@ -5,24 +5,45 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: php-app
+    restart: unless-stopped
+    tty: true
     ports:
       - 80:80
     depends_on:
       - mysql
       - rabbitmq
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - books-network
 
   mysql:
     image: mysql:latest
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
     ports:
       - 3306:3306
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: aqbgt2
       MYSQL_DATABASE: test_books
       MYSQL_USER: books
-      MYSQL_PASSWORD: root
+      MYSQL_PASSWORD: aqetrvv
+    networks:
+      - books-network
 
   rabbitmq:
     image: "rabbitmq:management"
+    container_name: rabbitmq
+    restart: unless-stopped
+    tty: true
     ports:
       - 5672:5672
       - 15672:15672
+    networks:
+      - books-network
+
+networks:
+  books-network:
+      driver: bridge
