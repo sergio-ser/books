@@ -29,8 +29,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
-# Add a cron job to run Symfony command every 5 minutes
-RUN echo "*/1 * * * * www-data /usr/local/bin/php /var/www/html/bin/console app:consume-books" > /etc/crontab
+# Add a cron job to run Symfony command
+RUN echo "* * * * * www-data /usr/local/bin/php /var/www/html/bin/console app:consume-books" > /etc/crontab
 
 # Start PHP-FPM and Nginx
 CMD /usr/local/bin/start.sh

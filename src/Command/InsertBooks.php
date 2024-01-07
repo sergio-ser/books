@@ -38,7 +38,7 @@ class AddBooksCommand extends Command
         $channel->queue_declare(Utils::DB_INSERT_QUEUE, false, true, false, false);
         $channel->queue_bind(Utils::DB_INSERT_QUEUE, Utils::DB_INSERT_EXCHANGE, Utils::ROUTING_KEY);
 
-        for ($i = 1; $i <= 100000; ++$i) {
+        for ($i = 0; $i <= 1010000; ++$i) {
             $book = [
                 'entity' => 'books',
                 'data' => [

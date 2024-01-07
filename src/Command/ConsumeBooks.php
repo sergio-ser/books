@@ -53,31 +53,24 @@ class ConsumeBooksCommand extends Command
             false,
             false,
             false,
-            function (AMQPMessage $message) use ($entityManager, &$messageCount, $batchSize) {
+            function (AMQPMessage $message) use (&$batch, &$messageCount, $batchSize, $entityManager) {
                 try {
                     $payload = json_decode($message->body, true);
         
                     $entityName = $payload['entity'];
                     $data = $payload['data'];
         
-                    $connection = $entityManager->getConnection();
-                    $query = "INSERT INTO $entityName (".implode(',', array_keys($data)).") VALUES (".implode(',', array_fill(0, count($data), '?')).")";
-                    $statement = $connection->prepare($query);
-                    $statement->execute(array_values($data));
+                    $batch[] = $data;
         
-                    $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
-        
-                    $messageCount++;
-        
-                    if ($messageCount % $batchSize === 0) {
-                        $entityManager->clear();
+                    if (++$messageCount % $batchSize === 0) {
+                        $this->insertBatch($entityManager, $entityName, $batch);                        
+                        $batch = [];
                         echo "$messageCount records processed.\n";
                     }
-                    
-                } catch (\Exception $e) {
-                    $this->logger->error(__FILE__ . ' | ' . __LINE__ . ' | ' . $e->getMessage());
         
                     $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
+                } catch (\Exception $e) {
+                    $this->logger->error(__FILE__ . ' | ' . __LINE__ . ' | ' . $e->getMessage());
                 }
             }
         );
@@ -86,13 +79,44 @@ class ConsumeBooksCommand extends Command
 
         while ($channel->is_consuming()) {
             $channel->wait();
-        }        
-
+        }
+        
         $channel->close();
         $this->rabbitMqConnection->close();
 
         return Command::SUCCESS;
 
+    }
+
+    private function insertBatch(EntityManagerInterface $entityManager, string $entityName, array $batch): void
+    {
+
+        $connection = $entityManager->getConnection();
+
+        try {
+            $connection->beginTransaction();
+
+            $columns = implode(',', array_keys($batch[0]));
+            $placeholders = rtrim(str_repeat('?,', count($batch[0])), ',');
+
+            $valuesPlaceholders = implode(',', array_fill(0, count($batch), "($placeholders)"));
+
+            $values = [];
+            foreach ($batch as $data) {
+                $values = array_merge($values, array_values($data));
+            }
+
+            $query = "INSERT INTO $entityName ($columns) VALUES $valuesPlaceholders";
+
+            $statement = $connection->prepare($query);
+            $statement->execute($values);
+
+            $connection->commit();
+        } catch (\Exception $e) {
+            $this->logger->error(__FILE__ . ' | ' . __LINE__ . ' | ' . $e->getMessage());
+            
+            $connection->rollBack();
+        }
     }
 
 }
