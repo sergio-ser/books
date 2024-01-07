@@ -19,6 +19,18 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-
+    App\Command\AddBooksCommand:
+        tags:
+            - { name: 'console.command' }
+    App\Command\ConsumeBooksCommand:
+        tags:
+            - { name: 'console.command' }
+    PhpAmqpLib\Connection\AMQPStreamConnection:
+        arguments:
+            $host: '%env(RABBITMQ_HOST)%'
+            $port: '%env(RABBITMQ_PORT)%'
+            $user: '%env(RABBITMQ_USER)%'
+            $password: '%env(RABBITMQ_PASSWORD)%'
+            $vhost: '%env(RABBITMQ_VHOST)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

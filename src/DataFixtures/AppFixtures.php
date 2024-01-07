@@ -13,9 +13,9 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create();
-        $batchSize = 1000;
+        $batchSize = 100;
 
-        for ($i = 0; $i < 1000000; $i++) {
+        for ($i = 0; $i < 1000; $i++) {
             $entity = new Books;
             $entity->setTitle($faker->sentence(4));
             $entity->setAuthor($faker->name);
@@ -27,12 +27,9 @@ class AppFixtures extends Fixture
             if (($i % $batchSize) === 0) {
                 $manager->flush();
                 $manager->clear();
-                $manager->detach($entity);
-                gc_collect_cycles();
             }
         }
 
         $manager->flush();
-        gc_collect_cycles();
     }
 }
