@@ -19,6 +19,7 @@ Api for CRUD books
     ```
     docker compose up
     ```
+Note: To install and import all records you will need about 5 minutes
 
 ## Api documentation ##
 1. Access the endpoint to see Api functional.
