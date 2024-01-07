@@ -17,7 +17,7 @@ Api for CRUD books
     ```
 3. Up docker image.
     ```
-    docker compose
+    docker compose up
     ```
 
 ## Api documentation ##
