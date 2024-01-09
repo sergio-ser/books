@@ -24,3 +24,8 @@ Note: To install and import all records you will need about 5 minutes
 ## Api documentation ##
 1. Access the endpoint to see Api functional.
  http://127.0.0.1/api/doc
+2. For secured routes you can find credential in .env or default
+   ```
+   user: ser
+   password: lol
+   ```
